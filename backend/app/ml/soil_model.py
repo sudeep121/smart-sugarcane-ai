@@ -91,13 +91,11 @@ def _load_model():
             return None
 
         try:
-            import tensorflow as tf  # noqa: PLC0415
-
             _model = model_runtime.load(path)
         except ImportError:
             _load_error = (
-                "A soil model file exists but TensorFlow is not installed. "
-                "Install it with: pip install -r ml/disease_detection/requirements.txt"
+                f"A soil model file exists ({path.name}) but no runtime can load it. "
+                "Install onnxruntime, or TensorFlow if the file is .keras."
             )
             logger.warning(_load_error)
             return None

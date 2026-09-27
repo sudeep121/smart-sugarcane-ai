@@ -155,8 +155,6 @@ def _load_model():
             _load_error = "No validator model file in models/."
             return None
         try:
-            from tensorflow import keras  # noqa: PLC0415
-
             _model = model_runtime.load(path)
             meta_path = settings.models_dir / META_FILENAME
             if meta_path.exists():
