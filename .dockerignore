@@ -1,28 +1,29 @@
-# Keep the build context small and never ship local state into the image.
-**/venv/
-**/node_modules/
-**/__pycache__/
+# Keep the serving image small. It is built for a 512 MB free tier, so
+# anything the running app does not read is excluded.
+
+.git
+.gitattributes
+node_modules
+**/node_modules
+**/__pycache__
 **/*.pyc
-frontend/
-.git/
-.github/
-.vscode/
+backend/venv
+frontend/dist
+frontend/android
+datasets
+uploads
+docs
+deploy
 
-# Local secrets and local data
-**/.env
-!**/.env.example
+# Keras originals are ~41 MB and the server never loads them: it serves the
+# ONNX exports. They stay in the repository for retraining and re-export.
+models/*.keras
+models/*.h5
+
+# Local databases, environment files and build artefacts.
 *.db
-*.sqlite
 *.sqlite3
-backend/smart_sugarcane.db
-
-# User uploads are runtime state, not build input
-uploads/**
-!uploads/.gitkeep
-
-# Generated training data (the model artifact in models/ IS copied in)
-ml/irrigation/irrigation_dataset.csv
-
-docs/
-*.md
-!README.md
+**/.env
+*.pptx
+*.pdf
+*.apk

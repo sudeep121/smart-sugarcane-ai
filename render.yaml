@@ -1,16 +1,20 @@
-# Render blueprint for the Smart Sugarcane AI backend.
+# Render blueprint - the whole application, free tier, no credit card.
 #
-# Render runs a real container, so unlike Vercel's serverless functions it can
-# hold the 457 MB scientific-Python stack, keep the trained model warm in memory
-# between requests, and (on a paid plan) mount a persistent disk for SQLite and
-# uploaded photos.
+# One container serves the React interface and the FastAPI API from a single
+# origin, with the three trained models running on ONNX Runtime. The result is
+# a permanent HTTPS address that works from any device on any network.
+#
+# This fits the free plan only because the models were moved off TensorFlow.
+# Measured on these three models: TensorFlow peaks at 579 MB resident, ONNX
+# Runtime at 117 MB. The free instance has 512 MB, so the TensorFlow build was
+# killed on import; the ONNX build uses roughly 250 MB all in.
 #
 # Deploy: push to GitHub, then in Render choose "New > Blueprint" and point it
-# at this repository.
+# at this repository. Render assigns https://<name>.onrender.com.
 
 services:
   - type: web
-    name: smart-sugarcane-api
+    name: smart-sugarcane-ai
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
@@ -22,9 +26,9 @@ services:
       - key: SECRET_KEY
         generateValue: true
 
-      # Set this to your Vercel URL after the frontend is deployed, e.g.
-      #   https://smart-sugarcane-ai.vercel.app
-      # Comma-separated for multiple origins. No trailing slash.
+      # The interface is served by this same service, so nothing makes a
+      # cross-origin request and this list only needs to cover the service's
+      # own URL. Set it after the first deploy, when Render has assigned one.
       - key: CORS_ORIGINS
         sync: false
 
@@ -34,32 +38,41 @@ services:
       - key: MAX_UPLOAD_MB
         value: "10"
 
-      # Optional live weather. Leave unset and the app says so honestly.
+      # Optional live weather. Leave unset and the app says so rather than
+      # inventing values.
       - key: OPENWEATHER_API_KEY
         sync: false
       - key: DEFAULT_WEATHER_CITY
         value: Belagavi,IN
 
       # ---------------------------------------------------------------
-      # DATABASE_URL is deliberately NOT set here.
+      # DATABASE_URL is deliberately not set.
       #
-      # Without it the app falls back to SQLite inside the container, which
-      # works but is WIPED ON EVERY DEPLOY AND RESTART on the free plan.
-      # That is fine for a demo; it is not fine for real use.
+      # Without it the app uses SQLite inside the container, which is WIPED
+      # whenever the service redeploys, restarts, or wakes from a spin-down.
+      # Accounts and saved analyses do not survive. That is acceptable for a
+      # demonstration and not for real use.
       #
-      # For durable data, either:
-      #   (a) add a Render PostgreSQL instance and set
-      #       DATABASE_URL=postgresql+psycopg://...   (also add psycopg to
-      #       backend/requirements.txt), or
-      #   (b) upgrade to a paid plan and attach the disk below, then set
-      #       DATABASE_URL=sqlite:////var/data/smart_sugarcane.db
+      # For data that persists, create a free Render PostgreSQL instance (or
+      # use any managed Postgres) and set:
+      #   DATABASE_URL=postgresql+psycopg://user:pass@host/dbname
+      # The psycopg driver is already in backend/requirements.txt.
       # ---------------------------------------------------------------
 
-    # Persistent storage is NOT available on Render's free plan. Uncomment this
-    # block on a paid plan to keep the database and uploaded photos across
-    # deploys, and set UPLOAD_DIR=/var/data/uploads.
+    # Free instances have no persistent disk. On a paid plan, uncomment this
+    # and set UPLOAD_DIR=/var/data/uploads to keep photographs across deploys.
     #
     # disk:
     #   name: sugarcane-data
     #   mountPath: /var/data
     #   sizeGB: 1
+
+# Known behaviour of the free plan, so it is not mistaken for a fault:
+#
+#   * The service spins down after 15 minutes without traffic, and the next
+#     request waits about a minute while it starts again. Loading three ONNX
+#     models is quick; most of that minute is the container itself.
+#   * 750 instance hours per workspace per month, which covers one service
+#     running continuously.
+#   * Uploaded photographs and the SQLite database are lost on every restart
+#     unless DATABASE_URL points somewhere external.

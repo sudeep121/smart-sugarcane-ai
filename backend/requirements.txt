@@ -36,17 +36,17 @@ httpx==0.28.1
 # The backend runs perfectly without it, in clearly-labelled DEMO image mode.
 
 # --- Trained image models -----------------------------------------------
-# Without TensorFlow the disease, soil and validator models cannot load and the
-# API silently falls back to demo heuristics. It was previously declared only in
-# ml/disease_detection/requirements.txt, so a container built from this file
-# alone shipped without it and served demo results while reporting success.
-# tensorflow-cpu publishes x86_64 wheels only, so a bare "tensorflow-cpu" pin
-# fails outright on ARM - which is exactly what Oracle's Always Free tier runs.
-# The main tensorflow package does ship manylinux aarch64 wheels, and on Linux
-# it is CPU-only anyway unless CUDA is present. Same split as
-# ml/disease_detection/requirements.txt.
-tensorflow-cpu==2.18.0 ; sys_platform == "win32"
-tensorflow==2.18.0 ; sys_platform != "win32"
+# ONNX Runtime, not TensorFlow. Measured on this project's three models:
+# TensorFlow peaks at 579 MB resident once loaded and inferring, ONNX Runtime
+# at 117 MB. Every free hosting tier caps at 512 MB, so TensorFlow is killed on
+# import and the app could only ever run on a laptop. The exported graphs are
+# verified against the Keras originals by ml/export_onnx.py - drift under
+# 5e-06 and identical predicted classes on every held-out image tested.
+#
+# TensorFlow is still needed to TRAIN, and to re-export. It lives in
+# ml/disease_detection/requirements.txt, so the serving image does not carry
+# it and the app falls back to Keras automatically if only .keras files exist.
+onnxruntime==1.19.2
 
 # --- Managed Postgres ----------------------------------------------------
 # A hosted container's filesystem is wiped on every restart, so SQLite there

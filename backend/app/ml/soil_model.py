@@ -17,11 +17,12 @@ import numpy as np
 from PIL import Image
 
 from app.core.config import settings
+from app.ml import model_runtime
 from app.ml import image_features as feats
 
 logger = logging.getLogger(__name__)
 
-MODEL_FILENAMES = ("sugarcane_soil_model.keras", "soil_model.keras", "sugarcane_soil_model.h5")
+MODEL_STEMS = ("sugarcane_soil_model", "soil_model")
 META_FILENAME = "soil_model_meta.json"
 
 DEFAULT_CLASS_NAMES = ["black", "red", "sandy", "clay", "loamy"]
@@ -36,11 +37,8 @@ _load_error: str | None = None
 
 # --------------------------------------------------------------------- model IO
 def find_model_file() -> Path | None:
-    for name in MODEL_FILENAMES:
-        candidate = settings.models_dir / name
-        if candidate.exists():
-            return candidate
-    return None
+    """Preferring .onnx, which serves in a fifth of the memory Keras needs."""
+    return model_runtime.find_model_file(settings.models_dir, MODEL_STEMS)
 
 
 def _read_class_names() -> list[str]:
@@ -95,7 +93,7 @@ def _load_model():
         try:
             import tensorflow as tf  # noqa: PLC0415
 
-            _model = tf.keras.models.load_model(path)
+            _model = model_runtime.load(path)
         except ImportError:
             _load_error = (
                 "A soil model file exists but TensorFlow is not installed. "
@@ -145,7 +143,7 @@ def status() -> dict[str, Any]:
     if model is None:
         return {
             "trained_model_available": False,
-            "model_path": str(path) if path else str(settings.models_dir / MODEL_FILENAMES[0]),
+            "model_path": str(path) if path else str(settings.models_dir / f"{MODEL_STEMS[0]}.onnx"),
             "model_source": "demo_heuristic",
             "mode": settings.MODEL_MODE,
             "class_names": _read_class_names(),
