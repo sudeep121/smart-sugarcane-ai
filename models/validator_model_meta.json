@@ -1,0 +1,29 @@
+{
+  "class_names": [
+    "not_sugarcane",
+    "sugarcane"
+  ],
+  "input_size": [
+    160,
+    160
+  ],
+  "backbone": "mobilenetv2",
+  "preprocessing": "rescale_in_model",
+  "trained_at": "2026-09-05T03:16:00+00:00",
+  "training_note": "Phase-1 checkpoint (classifier head only, backbone frozen). The run was interrupted at epoch 5 of 10 before fine-tuning, so this is the best frozen-backbone checkpoint rather than a completed two-phase model.",
+  "dataset": {
+    "positives": "C:/Users/Hp/datasets/sugarcane",
+    "negatives": "corn, PlantVillage, tomato, potato, chilli, soil",
+    "negative_note": "Maize is the hardest negative: its leaves share the long blade shape and green of sugarcane, so it is deliberately the largest negative source."
+  },
+  "honesty_note": "This model answers one question only: does this photograph show sugarcane. It does not diagnose disease and says nothing about plant health.",
+  "holdout_evaluation": {
+    "images": 792,
+    "accuracy": 0.994,
+    "sugarcane_recall": 1.0,
+    "not_sugarcane_recall": 0.989,
+    "maize_rejected": 0.928,
+    "maize_images_tested": 400,
+    "note": "Held out before training. Maize is reported separately because it is the hard case: 7.2 % of maize photographs are still accepted as sugarcane. Both sets come from the same source datasets, so same-source style cues cannot be ruled out; the maize figure is the one to trust least optimistically."
+  }
+}

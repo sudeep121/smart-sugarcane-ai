@@ -1,3 +1,15 @@
+---
+title: Smart Sugarcane AI
+emoji: "🌱"
+colorFrom: green
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+license: mit
+short_description: Irrigation, disease and soil analysis for sugarcane
+---
+
 # Smart Sugarcane AI
 
 AI-powered sugarcane irrigation, disease detection, soil analysis and fertilizer

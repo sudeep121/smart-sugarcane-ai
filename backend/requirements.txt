@@ -34,3 +34,16 @@ httpx==0.28.1
 # only needed to TRAIN or RUN the deep-learning image models. Install it separately:
 #     pip install -r ../ml/disease_detection/requirements.txt
 # The backend runs perfectly without it, in clearly-labelled DEMO image mode.
+
+# --- Trained image models -----------------------------------------------
+# Without TensorFlow the disease, soil and validator models cannot load and the
+# API silently falls back to demo heuristics. It was previously declared only in
+# ml/disease_detection/requirements.txt, so a container built from this file
+# alone shipped without it and served demo results while reporting success.
+tensorflow-cpu==2.18.0
+
+# --- Managed Postgres ----------------------------------------------------
+# A hosted container's filesystem is wiped on every restart, so SQLite there
+# loses every account and every saved analysis. With DATABASE_URL set to a
+# Postgres instance the data survives; without it the app still runs on SQLite.
+psycopg[binary]==3.2.3

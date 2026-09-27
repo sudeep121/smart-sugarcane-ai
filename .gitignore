@@ -46,11 +46,15 @@ uploads/**
 
 # Trained model artifacts are large binaries. Regenerate them with the
 # scripts in ml/ rather than committing them.
-models/*.joblib
-models/*.keras
-models/*.h5
-models/*.metrics.json
-models/*_meta.json
+# Trained models ARE committed. They total 58 MB, well inside GitHub's limits,
+# and a host that builds from this repository has no other way to obtain them:
+# without them here, every deployment silently runs demo heuristics while
+# reporting success. Training them needs 618 MB of images and about an hour.
+# models/*.joblib
+# models/*.keras
+# models/*.h5
+# models/*.metrics.json
+# models/*_meta.json
 !models/.gitkeep
 
 # Generated training data

@@ -1,0 +1,53 @@
+{
+  "class_names": [
+    "alluvial",
+    "black",
+    "clay",
+    "red"
+  ],
+  "input_size": [
+    192,
+    192
+  ],
+  "backbone": "mobilenetv2",
+  "preprocessing": "rescale_in_model",
+  "trained_at": "2026-09-04T21:09:57+00:00",
+  "val_accuracy": 0.886,
+  "val_loss": 0.4289,
+  "epochs_run": 32,
+  "images_per_class": {
+    "alluvial": 239,
+    "black": 104,
+    "clay": 97,
+    "red": 132
+  },
+  "per_class_recall": {
+    "alluvial": 0.9318,
+    "black": 0.913,
+    "clay": 0.8947,
+    "red": 0.7857
+  },
+  "dataset_path": "C:\\Users\\Hp\\datasets\\soil\\clean",
+  "tensorflow_version": "2.21.0",
+  "honesty_note": "This model classifies soil APPEARANCE from a photograph. It cannot determine NPK, pH, electrical conductivity or micronutrient concentrations. Laboratory soil testing provides accurate nutrient and pH values.",
+  "holdout_evaluation": {
+    "images": 100,
+    "note": "Images quarantined before training in C:/Users/Hp/datasets/soil/holdout. Unlike val_accuracy, this split never drove EarlyStopping or checkpoint selection, so it is the honest generalisation figure.",
+    "accuracy": 0.93,
+    "serving_resize": "PIL BILINEAR",
+    "per_class_recall": {
+      "alluvial": 0.86,
+      "black": 1.0,
+      "clay": 1.0,
+      "red": 0.96
+    },
+    "resize_filter_comparison": {
+      "bilinear": 0.93,
+      "bicubic": 0.91,
+      "box": 0.9,
+      "hamming": 0.9,
+      "lanczos": 0.9
+    }
+  },
+  "val_accuracy_note": "val_accuracy is measured on the Keras validation split, which also drove EarlyStopping and ModelCheckpoint, so it is model-selection contaminated. Use holdout_evaluation.accuracy as the honest number."
+}

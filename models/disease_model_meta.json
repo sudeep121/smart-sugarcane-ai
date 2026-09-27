@@ -1,0 +1,29 @@
+{
+  "class_names": [
+    "healthy",
+    "mosaic",
+    "red_rot",
+    "rust",
+    "yellow_leaf"
+  ],
+  "input_size": [
+    224,
+    224
+  ],
+  "backbone": "mobilenetv2",
+  "preprocessing": "rescale_in_model",
+  "trained_at": "2026-09-04T19:11:39+00:00",
+  "val_accuracy": 0.8631,
+  "val_loss": 0.3742,
+  "epochs_run": 23,
+  "images_per_class": {
+    "healthy": 522,
+    "mosaic": 462,
+    "red_rot": 518,
+    "rust": 514,
+    "yellow_leaf": 505
+  },
+  "dataset_path": "C:\\Users\\Hp\\datasets\\sugarcane",
+  "tensorflow_version": "2.18.0",
+  "honesty_note": "Accuracy reported here is validation accuracy on a split of THIS dataset. It is not a field-validated diagnostic accuracy. Always verify important disease or chemical treatment decisions with a qualified agricultural expert."
+}

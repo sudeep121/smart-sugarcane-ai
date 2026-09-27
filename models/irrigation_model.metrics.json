@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "feature_order": [
+    "soil_moisture",
+    "temperature",
+    "humidity",
+    "rainfall",
+    "rain_probability",
+    "wind_speed",
+    "weather_condition",
+    "soil_type",
+    "growth_stage"
+  ],
+  "numeric_features": [
+    "soil_moisture",
+    "temperature",
+    "humidity",
+    "rainfall",
+    "rain_probability",
+    "wind_speed"
+  ],
+  "categorical_features": [
+    "weather_condition",
+    "soil_type",
+    "growth_stage"
+  ],
+  "regressor_name": "RandomForestRegressor",
+  "classifier_name": "RandomForestClassifier",
+  "metrics": {
+    "regressor_r2": 0.9624,
+    "regressor_mae": 1.3538,
+    "regressor_rmse": 1.8957,
+    "classifier_accuracy": 0.9642,
+    "classifier_f1": 0.9416,
+    "test_rows": 2400
+  },
+  "trained_at": "2026-08-21T10:02:00+00:00",
+  "dataset_rows": 12000,
+  "dataset_path": "C:\\Users\\Hp\\smart-sugarcane-ai\\ml\\irrigation\\irrigation_dataset.csv",
+  "dataset_type": "synthetic_demonstration",
+  "sklearn_version": "1.6.0",
+  "honesty_note": "Trained on a synthetic dataset generated from the project's water-balance model. Metrics show how well the model reproduces that model, NOT how well it predicts real field irrigation outcomes."
+}
