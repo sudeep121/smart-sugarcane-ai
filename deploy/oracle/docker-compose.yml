@@ -1,0 +1,70 @@
+# Smart Sugarcane AI on an Oracle Cloud Always Free ARM instance.
+#
+#   cd ~/smart-sugarcane-ai/deploy/oracle
+#   cp .env.example .env     # then edit DOMAIN and SECRET_KEY
+#   docker compose up -d --build
+#
+# Two containers. `app` is the whole application - React interface and FastAPI
+# API on one origin, with the three trained models loaded. `caddy` terminates
+# HTTPS in front of it and renews the certificate by itself.
+#
+# HTTPS is not decoration here. Without it an Android phone will not install
+# the app to the home screen, service workers refuse to register, and the
+# browser warns on every visit. A free DuckDNS subdomain is enough for Caddy
+# to obtain a real Let's Encrypt certificate.
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: smart-sugarcane-ai:latest
+    restart: unless-stopped
+    expose:
+      - "7860"
+    environment:
+      PORT: "7860"
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env}
+      MODEL_MODE: auto
+      MAX_UPLOAD_MB: "10"
+      # Same origin through Caddy, so no cross-origin requests are made at all.
+      CORS_ORIGINS: https://${DOMAIN}
+      UPLOAD_DIR: /data/uploads
+      # Unset by default: the app then uses SQLite under /data, which survives
+      # restarts because /data is a volume. Point this at managed Postgres if
+      # the data needs to outlive the VM itself.
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/smart_sugarcane.db}
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY:-}
+      DEFAULT_WEATHER_CITY: ${DEFAULT_WEATHER_CITY:-Belagavi,IN}
+    volumes:
+      # Uploaded photographs and the SQLite database. Without this volume both
+      # are lost on every `docker compose up`.
+      - appdata:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:7860/api/system/health"]
+      interval: 30s
+      timeout: 5s
+      # Importing TensorFlow and loading three models takes over a minute on
+      # two ARM cores; a shorter window marks a healthy container as failed.
+      start_period: 300s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  appdata:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,30 @@
+# Caddy obtains and renews a Let's Encrypt certificate for $DOMAIN by itself.
+# The HTTP-01 challenge needs port 80 reachable from the internet, which is why
+# setup.sh opens 80 as well as 443 in both the OCI security list and the
+# instance firewall.
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Photo uploads are multipart and can be several megabytes; the default
+	# buffer would reject them before FastAPI ever sees the request.
+	request_body {
+		max_size 12MB
+	}
+
+	reverse_proxy app:7860 {
+		# Analysis of a large photograph on two ARM cores is not instant, and
+		# the first request after a restart waits for the models to load.
+		transport http {
+			read_timeout 300s
+			write_timeout 300s
+		}
+	}
+
+	log {
+		output file /data/access.log {
+			roll_size 10MB
+			roll_keep 3
+		}
+	}
+}

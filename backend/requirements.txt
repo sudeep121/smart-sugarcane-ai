@@ -40,7 +40,13 @@ httpx==0.28.1
 # API silently falls back to demo heuristics. It was previously declared only in
 # ml/disease_detection/requirements.txt, so a container built from this file
 # alone shipped without it and served demo results while reporting success.
-tensorflow-cpu==2.18.0
+# tensorflow-cpu publishes x86_64 wheels only, so a bare "tensorflow-cpu" pin
+# fails outright on ARM - which is exactly what Oracle's Always Free tier runs.
+# The main tensorflow package does ship manylinux aarch64 wheels, and on Linux
+# it is CPU-only anyway unless CUDA is present. Same split as
+# ml/disease_detection/requirements.txt.
+tensorflow-cpu==2.18.0 ; sys_platform == "win32"
+tensorflow==2.18.0 ; sys_platform != "win32"
 
 # --- Managed Postgres ----------------------------------------------------
 # A hosted container's filesystem is wiped on every restart, so SQLite there
