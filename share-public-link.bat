@@ -37,9 +37,9 @@ echo Keep this window OPEN. Close it to take the site offline.
 echo ============================================================
 echo.
 
-REM A fixed subdomain keeps the URL the same every time you run this,
-REM so you can put it in a report. If it is already taken, localtunnel
-REM falls back to a random name and prints that instead.
+REM A fixed subdomain keeps the URL the same every time you run this,
+REM so you can put it in a report. If it is already taken, localtunnel
+REM falls back to a random name and prints that instead.
 npx --yes localtunnel --port 8000 --subdomain smart-sugarcane-ai
 
 echo.

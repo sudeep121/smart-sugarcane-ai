@@ -1,0 +1,35 @@
+# Normalise text in the repository to LF.
+#
+# This project is written on Windows and deployed to Linux. Without these
+# rules git stored CRLF, and a shell script with CRLF fails on Linux with
+# "bad interpreter: /usr/bin/env bash^M" - the deploy script could not run on
+# the very machine it was written for. Dockerfiles and container configs fail
+# the same way inside a build.
+
+* text=auto eol=lf
+
+# Must be LF: executed or parsed by Linux tooling.
+*.sh            text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+Dockerfile      text eol=lf
+Caddyfile       text eol=lf
+*.py            text eol=lf
+.env.example    text eol=lf
+gradlew         text eol=lf
+
+# Windows-only scripts keep CRLF, since cmd.exe expects it.
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+gradlew.bat     text eol=crlf
+
+# Binary: never touch.
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.keras         binary
+*.joblib        binary
+*.h5            binary
+*.pptx          binary
+*.pdf           binary
+*.apk           binary
