@@ -21,18 +21,26 @@ machine — no cloud account, no API keys required.
 
 ## Live deployment
 
-**🌐 https://smart-sugarcane-ai.vercel.app**
+**🌐 https://sugarcane-irrigation.vercel.app**
 
 Frontend and API are served from a single Vercel project (same origin, no CORS),
-backed by hosted PostgreSQL.
+backed by hosted PostgreSQL. The soil, disease and validator models all run
+there as trained models, on ONNX Runtime.
+
+That last part is why this deploys at all. A Vercel function is capped at
+250 MB and TensorFlow with these models measures 579 MB resident, so earlier
+deployments silently fell back to demo heuristics while reporting success.
+Exported to ONNX the same graphs peak at 117 MB — about 130 MB for the whole
+function — with predictions verified identical to the Keras originals
+(`ml/export_onnx.py` refuses to write an export that disagrees).
 
 Two differences from a local run, both deliberate and reported by the app itself
 at `/api/system/status`:
 
 | | Local | Vercel |
 |---|---|---|
-| Irrigation | **Trained Random Forest** | Rule engine |
-| Uploaded photos | Stored and displayed | Analysed, not stored |
+| Irrigation | **Trained Random Forest** | Rule engine — scikit-learn and SciPy add 154 MB |
+| Uploaded photos | Stored and displayed | Analysed, not stored — serverless has no disk |
 
 Vercel caps a Python function at 250 MB and the scientific stack is 457 MB, so
 the deployment ships without scikit-learn and falls back to the water-balance
@@ -78,21 +86,42 @@ This project is deliberately honest about which parts are real machine learning
 and which are not. Every AI response carries a `model_source` field, and the UI
 shows a badge on every result.
 
-| Module | Status out of the box | What that means |
+| Module | Status out of the box | Measured on |
 |---|---|---|
-| **Irrigation** | ✅ **Trained model** (after you run one command) | `RandomForestRegressor` + `RandomForestClassifier`, trained on a **synthetic** dataset generated from the project's water-balance model. Falls back to the transparent rule engine if the model file is missing. |
-| **Disease detection** | ⚠️ **DEMO heuristic** | No labelled sugarcane disease dataset ships with this project, so there is nothing honest to train on. A transparent colour/texture heuristic runs instead, and every result is labelled `DEMO`. |
-| **Soil analysis** | ⚠️ **DEMO heuristic** | Same situation. An HSV colour + graininess estimate, labelled `DEMO visual estimate`. |
+| **Soil analysis** | ✅ **Trained model** | MobileNetV2 exported to ONNX, four classes. **93.0 %** on 100 photographs quarantined before training; black, clay and red all at 100 % recall. |
+| **Disease detection** | ✅ **Trained model** | MobileNetV2 exported to ONNX, five sugarcane conditions, 2,521 images. **86.3 %** — see the caveat below. |
+| **Sugarcane image validator** | ✅ **Trained model** | Rejects photographs that are not sugarcane before any diagnosis runs. **99.5 %** on 792 held-out images; **93.0 %** of maize correctly rejected. |
+| **Irrigation** | ✅ **Trained model** locally, rule engine when deployed | `RandomForestRegressor` + `RandomForestClassifier`, R² **0.962**, MAE 1.35 mm, on a synthetic dataset from the project's water-balance model. scikit-learn and SciPy do not fit in a serverless function, so the live site uses the FAO-56 rule engine and says so on every result. |
 | **Assistant** | ℹ️ **Rule-based** | Keyword intent matching over your saved records and the JSON knowledge base. Not a large language model, and it says so. |
 
-**The demo heuristics are not fake.** They measure real properties of your image
-— colour coverage, lesion fragmentation, edge density, graininess — and respond
-to what is actually in the photo. They are validated against synthetic reference
-images by `backend/calibration_check.py`. But they are **not** trained on real
-sugarcane photographs, they are **not** diagnostically validated, and the app
-never presents them as a diagnosis.
+Every AI response carries a `model_source` field — `trained_model`,
+`rule_engine` or `demo_heuristic` — which the interface renders as a badge, so
+you always know which produced a result.
 
-To replace them with real models, see [Training the ML models](#training-the-ml-models).
+**Where the numbers come from.** Soil and the validator are measured on images
+quarantined *before* training and never seen again, using the same resize path
+the server uses. **The disease figure is weaker evidence**: it is validation
+accuracy, and the same split also chose the best epoch, so it flatters the
+model. There is no separate held-out set for disease. Treat 86.3 % as
+optimistic rather than measured.
+
+**The validator's 93.0 % on maize is the number worth quoting**, not the
+99.5 % overall. Maize is the hard case — its leaves share sugarcane's long
+green blade shape — and roughly 7 in 100 maize photographs still pass as
+sugarcane.
+
+**The demo heuristics still exist** as a fallback, and run only when a model
+file is missing. They measure real properties of the image — colour coverage,
+lesion fragmentation, edge density, graininess — and every result they produce
+is labelled `DEMO`. `backend/calibration_check.py` validates them against
+synthetic reference images.
+
+**What a photograph cannot do.** These models classify *appearance*. No
+photograph can measure nitrogen, phosphorus, potassium, pH or electrical
+conductivity, and the application never claims otherwise — every soil result
+says so and points to a laboratory test.
+
+To retrain or re-export the models, see [Training the ML models](#training-the-ml-models).
 
 Check live status at any time:
 
