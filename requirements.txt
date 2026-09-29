@@ -32,3 +32,14 @@ numpy==2.2.1
 Pillow==11.1.0
 
 httpx==0.28.1
+
+# --- Trained image models on Vercel --------------------------------------
+# This is what finally makes the deployed site run the real models instead of
+# demo heuristics. Vercel caps a function at 250 MB unpacked, and TensorFlow
+# alone blows past that - which is why every deployment so far served
+# heuristics while reporting success.
+#
+# ONNX Runtime serves the same graphs in a fraction of the space. Measured
+# from the installed packages: 104 MB of dependencies plus 26 MB of models,
+# about 130 MB total, leaving roughly 120 MB of headroom.
+onnxruntime==1.19.2

@@ -7,10 +7,21 @@
 #
 # Anything meant as a project-root directory MUST start with a slash.
 
-# Training scripts and model artifacts (project root only - NOT backend/app/ml
-# or backend/app/models, which are application code).
+# Training scripts (project root only - NOT backend/app/ml or
+# backend/app/models, which are application code).
 /ml/
-/models/
+
+# The ONNX models ARE deployed: 26 MB, and they are what makes the live site
+# run the real classifiers instead of demo heuristics. Everything else under
+# models/ is excluded because the function cannot use it:
+#   *.keras / *.h5  - 41 MB, and loading them needs TensorFlow, which does not
+#                     fit in 250 MB. The .onnx exports replace them.
+#   *.joblib        - the irrigation model needs scikit-learn and SciPy, a
+#                     further 154 MB. Irrigation therefore runs on the FAO-56
+#                     rule engine here, which the interface states plainly.
+/models/*.keras
+/models/*.h5
+/models/*.joblib
 
 /docs/
 /.vscode/
