@@ -13,7 +13,8 @@ import json
 from pathlib import Path
 
 import numpy as np
-import tensorflow as tf
+import onnxruntime as ort
+from PIL import Image
 
 REPO = Path(__file__).resolve().parents[2]
 EXT = {".jpg", ".jpeg", ".png", ".bmp"}
@@ -29,9 +30,16 @@ def _resolve(relative: str) -> Path:
 
 
 def load(path: Path, size: int) -> np.ndarray:
-    raw = tf.io.read_file(str(path))
-    img = tf.io.decode_image(raw, channels=3, expand_animations=False)
-    return tf.cast(tf.image.resize(img, (size, size), antialias=True), tf.float32).numpy()
+    """Decode and resize exactly as the backend does.
+
+    Pillow rather than tf.io.decode_image for two reasons: it matches the
+    serving path, so this measures the model people actually use, and it reads
+    the WEBP files that are scattered through these web-scraped datasets under
+    a .jpg name - TensorFlow rejects those outright with "Unknown image file
+    format" and the evaluation cannot finish.
+    """
+    image = Image.open(path).convert("RGB").resize((size, size), Image.Resampling.BILINEAR)
+    return np.asarray(image, dtype=np.float32)
 
 
 def predict_dir(model, files, size, batch=48):
@@ -44,7 +52,7 @@ def predict_dir(model, files, size, batch=48):
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--model", type=Path, default=REPO / "models" / "sugarcane_validator_model.keras")
+    ap.add_argument("--model", type=Path, default=REPO / "models" / "sugarcane_validator_model.onnx")
     ap.add_argument("--meta", type=Path, default=REPO / "models" / "validator_model_meta.json")
     ap.add_argument("--holdout", type=Path, default=_resolve("sugarcane_validator/holdout"))
     ap.add_argument("--limit", type=int, default=0, help="cap images per class (0 = all)")
@@ -54,7 +62,15 @@ def main() -> None:
     names = meta["class_names"]
     size = int(meta["input_size"][0])
     pos_index = names.index("sugarcane")
-    model = tf.keras.models.load_model(args.model)
+    session = ort.InferenceSession(str(args.model), providers=["CPUExecutionProvider"])
+    input_name = session.get_inputs()[0].name
+
+    class _Runner:
+        @staticmethod
+        def predict(batch, verbose=0):  # noqa: ARG004
+            return session.run(None, {input_name: batch})[0]
+
+    model = _Runner()
 
     print(f"HELD-OUT SET - never seen during training\n")
     totals = {}
