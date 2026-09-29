@@ -83,3 +83,6 @@ frontend/android/build/
 frontend/android/.gradle/
 frontend/android/local.properties
 frontend/.env.android
+
+.vercel
+.env*
