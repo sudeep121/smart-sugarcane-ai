@@ -25,6 +25,10 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    // Listen on every interface, not just loopback, so a phone on the same
+    // Wi-Fi can open http://<this-machine-ip>:5173. Vite binds localhost by
+    // default, which no other device can resolve to this computer.
+    host: true,
     proxy: {
       // Uploaded images are served by FastAPI at /uploads/... - proxying them in
       // dev means <img src="/uploads/..."> works without hard-coding the host.
